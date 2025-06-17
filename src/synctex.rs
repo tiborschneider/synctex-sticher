@@ -65,6 +65,10 @@ pub enum Command {
         link: Link,
         point: Point,
     },
+    FormTag {
+        id: usize,
+        point: Point,
+    },
     RRecord {
         link: Link,
         point: Point,
@@ -478,6 +482,7 @@ impl Command {
                 Self::parse_glue_record,
                 Self::parse_math_record,
                 Self::parse_r_record,
+                Self::parse_form_tag,
             )),
             line_ending,
         )
@@ -551,6 +556,11 @@ impl Command {
                 wrt!(w, c, "$")?;
                 link.write(w, c)?;
                 wrt!(w, c, ":")?;
+                point.write(w, c)?;
+                wrtln!(w, c, "")
+            }
+            Command::FormTag { id, point } => {
+                wrt!(w, c, "f{}:", id)?;
                 point.write(w, c)?;
                 wrtln!(w, c, "")
             }
@@ -654,6 +664,14 @@ impl Command {
                 separated_pair(Link::parse, tag(":"), Point::parse),
             ),
             |(link, point)| Self::MathRecord { link, point },
+        )
+        .parse(input)
+    }
+
+    fn parse_form_tag(input: &str) -> IResult<&str, Self> {
+        map(
+            preceded(tag("f"), separated_pair(number, tag(":"), Point::parse)),
+            |(id, point)| Self::FormTag { id, point },
         )
         .parse(input)
     }
