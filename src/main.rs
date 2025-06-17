@@ -30,15 +30,23 @@ fn main() {
         *cmd = cmd.trim_start_matches("/").to_string();
     }
 
-    let main_file = synctex::File::read(&args.main).expect("Main synctex file does not exist!");
-
-    let mut output_file = synctex::File::empty_from(&main_file);
-    let mut includes = latex::Includes::new(args.include_commands);
-
     // construct the build path
     let mut output_path = PathBuf::from(&args.main);
     output_path.pop();
     output_path.push(args.output_directory);
+
+    let main_synctex_path = PathBuf::from(&args.main);
+    let filename = main_synctex_path
+        .file_name()
+        .expect("Empty filename provided");
+    let mut main_synctex_path = output_path.clone();
+    main_synctex_path.push(filename);
+
+    let main_file =
+        synctex::File::read(&main_synctex_path).expect("Main synctex file does not exist!");
+
+    let mut output_file = synctex::File::empty_from(&main_file);
+    let mut includes = latex::Includes::new(args.include_commands);
 
     // iterate over all commands and do some work
     let mut content_iter = main_file.content.into_iter();
@@ -75,7 +83,7 @@ fn main() {
     }
 
     // write to the output file
-    output_file.write_to_file(&args.main);
+    output_file.write_to_file(main_synctex_path);
 }
 
 fn advance_until<I, F>(i: &mut I, mut f: F)

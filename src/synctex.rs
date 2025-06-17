@@ -223,7 +223,9 @@ impl File {
 
     pub fn try_inject(&mut self, synctex_path: impl AsRef<Path>) -> Option<usize> {
         let synctex_path = synctex_path.as_ref();
-        Self::read(synctex_path).map(|inject_file| self.inject(inject_file))
+        let inject_file = Self::read(synctex_path)?;
+        println!("Injecting {synctex_path:?}");
+        Some(self.inject(inject_file))
     }
 
     fn inject(&mut self, inject_file: Self) -> usize {
@@ -231,10 +233,10 @@ impl File {
 
         // pop commands until we start a new page
         let mut page = loop {
-            if let Command::PageStart(x) = self.content.last().expect("No page to inject in") {
-                break *x;
+            let cmd = self.content.pop().expect("no page to inject");
+            if let Command::PageStart(x) = cmd {
+                break x - 1;
             }
-            self.content.pop();
         };
         let mut inject_page = 0;
 
@@ -321,6 +323,8 @@ impl File {
 
         self.write(&mut writer)
             .unwrap_or_else(|e| panic!("Error writing to file {filename:?}: {e}"));
+
+        println!("Written {filename:?}");
     }
 
     pub fn write<W: std::io::Write>(&self, w: &mut W) -> Result<(), std::io::Error> {
