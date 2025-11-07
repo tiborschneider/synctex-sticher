@@ -164,6 +164,7 @@ macro_rules! wrtln {
     };
 }
 
+#[derive(Debug)]
 pub struct InputTransform(HashMap<usize, usize>);
 
 impl InputTransform {
@@ -175,9 +176,7 @@ impl InputTransform {
     }
 
     pub fn transform_link(&self, link: Link) -> Link {
-        let Some(file) = self.0.get(&link.file).copied() else {
-            panic!("Missing transformation rule!")
-        };
+        let file = self.0.get(&link.file).copied().unwrap_or(link.file);
         Link {
             file,
             line: link.line,
